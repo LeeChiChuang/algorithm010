@@ -1,20 +1,22 @@
 # 学习笔记
 
+[TOC]
+
 
 
 ## **简单：**
 
-1. 用 add first 或 add last 这套新的 API 改写 Deque 的代码
+### 用 add first 或 add last 这套新的 API 改写 Deque 的代码
 
-2. 分析 Queue 和 Priority Queue 的源码
+### 分析 Queue 和 Priority Queue 的源码
 
-3. [删除排序数组中的重复项](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-array/)（Facebook、字节跳动、微软在半年内面试中考过）
+### [删除排序数组中的重复项](https://leetcode-cn.com/problems/remove-duplicates-from-sorted-array/)（Facebook、字节跳动、微软在半年内面试中考过）
 
-4. [旋转数组](https://leetcode-cn.com/problems/rotate-array/)（微软、亚马逊、PayPal 在半年内面试中考过）
+### [旋转数组](https://leetcode-cn.com/problems/rotate-array/)（微软、亚马逊、PayPal 在半年内面试中考过）
 
-5. [合并两个有序链表](https://leetcode-cn.com/problems/merge-two-sorted-lists/)（亚马逊、字节跳动在半年内面试常考）
+### [合并两个有序链表](https://leetcode-cn.com/problems/merge-two-sorted-lists/)（亚马逊、字节跳动在半年内面试常考）
 
-6. [合并两个有序数组](https://leetcode-cn.com/problems/merge-sorted-array/)（Facebook 在半年内面试常考）
+### [合并两个有序数组](https://leetcode-cn.com/problems/merge-sorted-array/)（Facebook 在半年内面试常考）
 
 **Go语言实现**
 
@@ -62,7 +64,7 @@ func merge(nums1 []int, m int, nums2 []int, n int)  {
 
 
 
-7. [两数之和](https://leetcode-cn.com/problems/two-sum/)（亚马逊、字节跳动、谷歌、Facebook、苹果、微软在半年内面试中高频常考）
+### [两数之和](https://leetcode-cn.com/problems/two-sum/)（亚马逊、字节跳动、谷歌、Facebook、苹果、微软在半年内面试中高频常考）
 
 **一遍哈希表**
 
@@ -81,39 +83,39 @@ func twoSum(nums []int, target int) []int {
 
 
 
-8. [移动零](https://leetcode-cn.com/problems/move-zeroes/)（Facebook、亚马逊、苹果在半年内面试中考过）
+### [移动零](https://leetcode-cn.com/problems/move-zeroes/)（Facebook、亚马逊、苹果在半年内面试中考过）
 
-   ```python
-   class Solution(object):
-       def moveZeroes(self, nums):
-           """
-           :type nums: List[int]
-           :rtype: None Do not return anything, modify nums in-place instead.
-           """
-           j = 0
-           for i in range(len(nums)):
-               if nums[i] != 0:
-                   if i != j:
-                       nums[j] = nums[i]
-                       nums[i] = 0
-                   j = j+1
-   
-           return nums
-   ```
+```python
+class Solution(object):
+    def moveZeroes(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: None Do not return anything, modify nums in-place instead.
+        """
+        j = 0
+        for i in range(len(nums)):
+            if nums[i] != 0:
+                if i != j:
+                    nums[j] = nums[i]
+                    nums[i] = 0
+                j = j+1
 
-   
+        return nums
+```
 
-9. [加一](https://leetcode-cn.com/problems/plus-one/)（谷歌、字节跳动、Facebook 在半年内面试中考过）
+
+
+### [加一](https://leetcode-cn.com/problems/plus-one/)（谷歌、字节跳动、Facebook 在半年内面试中考过）
 
 
 
 ## **中等：**
 
-- [设计循环双端队列](https://leetcode.com/problems/design-circular-deque)（Facebook 在 1 年内面试中考过）
+### [设计循环双端队列](https://leetcode.com/problems/design-circular-deque)（Facebook 在 1 年内面试中考过）
 
 ## **困难：**
 
-- [接雨水](https://leetcode.com/problems/trapping-rain-water/)（亚马逊、字节跳动、高盛集团、Facebook 在半年内面试常考）
+### [接雨水](https://leetcode.com/problems/trapping-rain-water/)（亚马逊、字节跳动、高盛集团、Facebook 在半年内面试常考）
 
 ## 
 
