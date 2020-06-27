@@ -1,6 +1,6 @@
 
 
-学习笔记
+# 学习笔记
 
 前序遍历(Pre-order)： 根-左-右
 
@@ -8,296 +8,223 @@
 
 后序遍历(Post-order): 左右根
 
-## hash
+## **哈希表、映射、集合**
 
-### Map 
+**Hash table（哈希表 散列表） 和 Hash Function（散列函数）**
 
-hashMap个人总结
+**完整结构**
 
-### Set
+![0B6E51B3-A6F2-473D-A02F-AAE634A3A234](https://tva1.sinaimg.cn/large/007S8ZIlly1gg0zw2pi7hj30mb0argnr.jpg)
 
-
-
-## 实战题目
-
-### [有效的字母异位词](https://leetcode-cn.com/problems/valid-anagram/description/)（亚马逊、Facebook、谷歌在半年内面试中考过）
-
-> 字母次数一样 顺序不一样
->
-> clarification
->
-> possible solution >> time & space
->
-> code
->
-> test case
->
-> 1. 暴力 sort >> 相等 O(NlogN)
+### Set 不重复的元素
 
 
 
-```go
-import (
-    "strings"
-    "sort"
-)
-func isAnagram(s string, t string) bool {
-    if len(s) != len(t) {
-        return false
-    }
-    sSlice := strings.Split(s, "")
-    tSlice := strings.Split(t, "")
-    sort.Strings(sSlice)
-    sort.Strings(tSlice)
+## **树、二叉树、二叉搜索树**
 
-    for index, ele := range sSlice {
-        if ele != tSlice[index] {
-            return false
-        }
-    }
+**二叉搜索树，也称为二叉排序树，有序二叉树（Order binary Tree）排序二叉树（Sort Binary Tree），指空树或者具有以下性质的二叉树：**
 
-    return true
+1. **左子树的所有节点的值均小于它的根节点**
+2. **右子树上所有节点的值大于他的根节点**
+3. **左右子树也均为二叉查找树**
+
+
+
+## 图
+
+### 图的属性
+
+- Grap(V, E)
+- V - vertex: 点
+  1. 度 - 入度和出度
+  2. 点与点之间：连通与否
+- E - edge 边
+  1. 有向和无向
+  2. 权重（边长）
+
+### 图的分类
+
+- 无向无权图
+- 有向无权图
+- 无向有权图
+
+### 基于图的常见算法
+
+- DFS 递归写法
+- BFS 
+
+### 图的高级算法
+
+- [连通图的个数](https://leetcode-cn.com/problems/number-of-islands/)
+- 拓扑排序
+- 最短路径
+- 最小生成树
+
+## Golang哈希Map总结(未完)
+
+### 初始化
+
+Compile/internal/gc/sinit.go
+
+```GO
+func maplit(n *Node, m *Node, init *Nodes) {
+	// make the map var
+	a := nod(OMAKE, nil, nil)
+	a.Esc = n.Esc
+	a.List.Set2(typenod(n.Type), nodintconst(int64(n.List.Len())))
+	litas(m, a, init)
+
+	entries := n.List.Slice()
+
+	// The order pass already removed any dynamic (runtime-computed) entries.
+	// All remaining entries are static. Double-check that.
+	for _, r := range entries {
+		if !isStaticCompositeLiteral(r.Left) || !isStaticCompositeLiteral(r.Right) {
+			Fatalf("maplit: entry is not a literal: %v", r)
+		}
+	}
+
+	if len(entries) > 25 {
+		// For a large number of entries, put them in an array and loop.
+
+		// build types [count]Tindex and [count]Tvalue
+		tk := types.NewArray(n.Type.Key(), int64(len(entries)))
+		te := types.NewArray(n.Type.Elem(), int64(len(entries)))
+
+		tk.SetNoalg(true)
+		te.SetNoalg(true)
+
+		dowidth(tk)
+		dowidth(te)
+
+		// make and initialize static arrays
+		vstatk := staticname(tk)
+		vstatk.MarkReadonly()
+		vstate := staticname(te)
+		vstate.MarkReadonly()
+
+		datak := nod(OARRAYLIT, nil, nil)
+		datae := nod(OARRAYLIT, nil, nil)
+		for _, r := range entries {
+			datak.List.Append(r.Left)
+			datae.List.Append(r.Right)
+		}
+		fixedlit(inInitFunction, initKindStatic, datak, vstatk, init)
+		fixedlit(inInitFunction, initKindStatic, datae, vstate, init)
+
+		// loop adding structure elements to map
+		// for i = 0; i < len(vstatk); i++ {
+		//	map[vstatk[i]] = vstate[i]
+		// }
+		i := temp(types.Types[TINT])
+		rhs := nod(OINDEX, vstate, i)
+		rhs.SetBounded(true)
+
+		kidx := nod(OINDEX, vstatk, i)
+		kidx.SetBounded(true)
+		lhs := nod(OINDEX, m, kidx)
+
+		zero := nod(OAS, i, nodintconst(0))
+		cond := nod(OLT, i, nodintconst(tk.NumElem()))
+		incr := nod(OAS, i, nod(OADD, i, nodintconst(1)))
+		body := nod(OAS, lhs, rhs)
+
+		loop := nod(OFOR, cond, incr)
+		loop.Nbody.Set1(body)
+		loop.Ninit.Set1(zero)
+
+		loop = typecheck(loop, ctxStmt)
+		loop = walkstmt(loop)
+		init.Append(loop)
+		return
+	}
+	// For a small number of entries, just add them directly.
+
+	// Build list of var[c] = expr.
+	// Use temporaries so that mapassign1 can have addressable key, elem.
+	// TODO(josharian): avoid map key temporaries for mapfast_* assignments with literal keys.
+	tmpkey := temp(m.Type.Key())
+	tmpelem := temp(m.Type.Elem())
+
+	for _, r := range entries {
+		index, elem := r.Left, r.Right
+
+		setlineno(index)
+		a := nod(OAS, tmpkey, index)
+		a = typecheck(a, ctxStmt)
+		a = walkstmt(a)
+		init.Append(a)
+
+		setlineno(elem)
+		a = nod(OAS, tmpelem, elem)
+		a = typecheck(a, ctxStmt)
+		a = walkstmt(a)
+		init.Append(a)
+
+		setlineno(tmpelem)
+		a = nod(OAS, nod(OINDEX, m, tmpkey), tmpelem)
+		a = typecheck(a, ctxStmt)
+		a = walkstmt(a)
+		init.Append(a)
+	}
+
+	a = nod(OVARKILL, tmpkey, nil)
+	a = typecheck(a, ctxStmt)
+	init.Append(a)
+	a = nod(OVARKILL, tmpelem, nil)
+	a = typecheck(a, ctxStmt)
+	init.Append(a)
 }
 ```
 
 
 
+使用make创建map
+
 ```go
-func isAnagram(s string, t string) bool {
-    if len(s) != len(t) {
-        return false
-    }
-    arrS := [26]int{}
-    arrT := [26]int{}
+// 使用map创建hash golang会在类型检查期间将他们转化成对makemap的调用
+// makemap implements Go map creation for make(map[k]v, hint).
+// If the compiler has determined that the map or the first bucket
+// can be created on the stack, h and/or bucket may be non-nil.
+// If h != nil, the map can be created directly in h.
+// If h.buckets != nil, bucket pointed to can be used as the first bucket.
+func makemap(t *maptype, hint int, h *hmap) *hmap {
+	mem, overflow := math.MulUintptr(uintptr(hint), t.bucket.size)
+	// 先判断是否溢出或者超出分配的最大值
+	if overflow || mem > maxAlloc {
+		hint = 0
+	}
 
-    for _, v := range(s) {
-        arrS[v - 'a'] += 1
-    }
-    for _, v := range(t) {
-        arrT[v - 'a'] += 1
-    }
+	// initialize Hmap
+	if h == nil {
+		h = new(hmap)
+	}
+	// 获取随机的hash种子
+	h.hash0 = fastrand()
 
-    return arrS == arrT
+  // 根据传入的hint计算最小需要的桶数量
+	// Find the size parameter B which will hold the requested # of elements.
+	// For hint < 0 overLoadFactor returns false since hint < bucketCnt.
+	B := uint8(0)
+	for overLoadFactor(hint, B) {
+		B++
+	}
+	h.B = B
+
+	// allocate initial hash table
+	// if B == 0, the buckets field is allocated lazily later (in mapassign)
+	// If hint is large zeroing this memory could take a while.
+  // makeBucketArray 创建用于保存桶的数组
+	if h.B != 0 {
+		var nextOverflow *bmap
+		h.buckets, nextOverflow = makeBucketArray(t, h.B, nil)
+		if nextOverflow != nil {
+			h.extra = new(mapextra)
+			h.extra.nextOverflow = nextOverflow
+		}
+	}
+
+	return h
 }
 ```
 
-
-
-```go
-
-```
-
-
-
-### [字母异位词分组](https://leetcode-cn.com/problems/group-anagrams/)（亚马逊在半年内面试中常考）
-
-
-
-### [两数之和](https://leetcode-cn.com/problems/two-sum/description/)（亚马逊、字节跳动、谷歌、Facebook、苹果、微软、腾讯在半年内面试中常考）
-
-
-
-### [二叉树的中序遍历](https://leetcode-cn.com/problems/binary-tree-inorder-traversal/)（亚马逊、微软、字节跳动在半年内面试中考过）
-
-> 递归
-
-```go
-var traversePath []int
-func inorderTraversal(root *TreeNode) []int {
-    traversePath = make([]int, 0)
-    return dfs(root)   
-}
-
-func dfs(root *TreeNode) []int {
-    if root != nil {
-        dfs(root.Left)
-        traversePath = append(traversePath, root.Val)
-        dfs(root.Right)
-    }
-
-    return traversePath
-}
-```
-
-> **Stack**迭代 时间复杂度O(n) 空间复杂度O(n)
-
-```go
-func inorderTraversal(root *TreeNode) []int {
-    var stack []*TreeNode
-    var res []int
-    index := 0
-    
-    for len(stack) > 0 || root != nil {
-        for root != nil {
-            stack = append(stack, root)
-            root = root.Left
-        }
-        index = len(stack) - 1
-        res = append(res, stack[index].Val)
-        root = stack[index].Right
-        stack = stack[:index]
-    }
-
-    return res
-}
-```
-
->莫里斯遍历 **破坏树结构**
->
->curr初始化为root
->
->当curr >> left 为空
->
->​	append元素
->
->​	curr >> right
->
->不为空
->
->​	prev >> curr.left 然后找到prev的最右子节点
->
->​	pref >> curr
->
->​	curr >> curr.left
-
-```go
-func inorderTraversal(root *TreeNode) []int {
-    var res []int
-    var prev *TreeNode
-    curr := root
-
-    for curr != nil {
-        if curr.Left == nil {
-            res = append(res, curr.Val)
-            curr = curr.Right
-        } else {
-            prev = curr.Left
-            for prev.Right != nil {
-                prev = prev.Right
-            }
-            prev.Right = curr
-            tmp := curr
-            curr = curr.Left
-            tmp.Left = nil
-        }
-    }
-
-    return res
-}
-```
-
-
-
-### [二叉树的前序遍历](https://leetcode-cn.com/problems/binary-tree-preorder-traversal/)（谷歌、微软、字节跳动在半年内面试中考过）
-
-### [N 叉树的后序遍历](https://leetcode-cn.com/problems/n-ary-tree-postorder-traversal/)（亚马逊在半年内面试中考过）
-
-### [N 叉树的前序遍历](https://leetcode-cn.com/problems/n-ary-tree-preorder-traversal/description/)（亚马逊在半年内面试中考过）
-
->递归
-
-```go
-var res []int
-func preorder(root *Node) []int {
-    res = make([]int , 0)
-    if root == nil {
-        return res
-    }
-    res = append(res, root.Val)
-    return recursive(root.Children)
-}
-
-func recursive(children []*Node) []int {
-    if children != nil {
-        for _, v := range(children) {
-            res = append(res, v.Val)
-            recursive(v.Children)
-        }
-    }
-
-    return res
-}
-```
-
-
-
-### [N 叉树的层序遍历](https://leetcode-cn.com/problems/n-ary-tree-level-order-traversal/)
-
-```go
-func levelOrder(root *Node) [][]int {
-    if root == nil {
-        return [][]int{}
-    }
-    quene := make([]*Node, 0)
-    quene = append(quene, root)
-    res := make([][]int, 0)
-    for len(quene) != 0 {
-        level := make([]int, 0)
-        size := len(quene)
-        for i:=0; i<size; i++ {
-            level = append(level, quene[0].Val)
-            quene  = append(quene, quene[0].Children...)
-            quene = quene[1:]
-        }
-        res = append(res, level)
-    }
-    return res
-}
-```
-
-
-
-
-
-## **中等：**
-
-## [字母异位词分组](https://leetcode-cn.com/problems/group-anagrams/)（亚马逊在半年内面试中常考）
-
-## [二叉树的中序遍历](https://leetcode-cn.com/problems/binary-tree-inorder-traversal/)（亚马逊、字节跳动、微软在半年内面试中考过）
-
-## [二叉树的前序遍历](https://leetcode-cn.com/problems/binary-tree-preorder-traversal/)（字节跳动、谷歌、腾讯在半年内面试中考过）
-
-## [N 叉树的层序遍历](https://leetcode-cn.com/problems/n-ary-tree-level-order-traversal/)（亚马逊在半年内面试中考过）
-
-## [丑数](https://leetcode-cn.com/problems/chou-shu-lcof/)（字节跳动在半年内面试中考过）
-
-```go
-func nthUglyNumber(n int) int {
-    // a*2 b*3 c*5
-    a, b, c := 0,0,0 // index
-    uglyNums := make([]int, n)
-    uglyNums[0] = 1
-    for i:=1;i<n;i++ {
-        numA, numB, numC := uglyNums[a]*2, uglyNums[b]*3, uglyNums[c]*5
-        minVal := min(numA, numB, numC)
-        if minVal == numA {
-            a++
-        }
-        if minVal == numB {
-            b++
-        }
-        if minVal == numC {
-            c++
-        }
-        uglyNums[i] = minVal
-    }
-    //fmt.Println(uglyNums)
-    return uglyNums[n-1]
-}
-
-func min(x int, y int, z int) int {
-    if x <= y && x <= z {
-        return x
-    }
-
-    if y <= x && y <= z {
-        return y
-    }
-
-    return z
-}
-```
-
-
-
-## [前 K 个高频元素](https://leetcode-cn.com/problems/top-k-frequent-elements/)（亚马逊在半年内面试中常考）
